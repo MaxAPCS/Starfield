@@ -19,13 +19,19 @@ void draw() {
   text(particles.size(), 0, height);
 }
 long heldSince = -1;
+float[] mousePos;
 void mousePressed() {
   heldSince = millis();
+  mousePos = new float[]{mouseX, mouseY};
 }
 void mouseReleased() {
-  long held = Math.max(millis() - heldSince, Math.round(950+Math.random()*100));
+  long held = millis() - heldSince;
+  double magn= 20*Math.log(dist(mousePos[0], mousePos[1], mouseX, mouseY));
+  double dir = Math.atan((mouseY-mousePos[1])/( mousePos[0] - mouseX )) + (mousePos[0] > mouseX ? PI : 0);
   heldSince = -1;
-  particles.add(new Firework(width/2, (int)Math.ceil(held/250f), Math.sqrt(held)*2.3, Math.random()*radians(50)+radians(65)));
+  if (held < 1500) held = Math.round(1000+Math.random()*150);
+  if (dir != dir) dir = radians(50)+Math.random()*radians(80);
+  particles.add(new Firework(width/2, (int)Math.ceil(held/125f), Math.max(Math.min(magn, 300), 100), Math.min(Math.max(dir, radians(50)), radians(130))));
 }
 abstract class Particle {
   protected float[] loc;
@@ -84,8 +90,9 @@ class Firework extends Projectile {
     if (this.loc[1] > height || alpha(this.colour) <= 0) {particles.remove(this); return;}
     super.update();
     this.colour = color(hue(this.colour)+this.colourVel, saturation(this.colour), brightness(this.colour), alpha(this.colour)-this.alphaVel);
-    if (this.fuse > 0 && super.time >= this.fuse && this.radius > 1) {
+    if (this.fuse > 0 && super.time >= this.fuse) {
       particles.remove(this);
+      if (this.radius < 5) return;
       int v = (int)Math.ceil(15+Math.random()*7);
       for (double dir = radians(10); dir < TWO_PI; dir += radians(20)+radians(20)*Math.random())
         particles.add(super.radius > 10
